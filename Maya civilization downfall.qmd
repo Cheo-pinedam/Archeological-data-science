@@ -1,0 +1,163 @@
+---
+title: "Environmental Analysis: Downfall of the Mayan Civilization"
+author: "Carlos Pineda"
+date: now
+format: html
+editor: visual
+self-contained: true
+execute: 
+  warning: false
+fig-dpi: 600
+---
+
+## Introduction
+
+When analyzing the reasons behind the downfall of civilizations, we tend to focus on warfare, corrupt government, or social inequality. Even though all these do lead to the downfall of civilizations there are some factors that are often overlooked. For example, environmental factors. Environmental factors are one of the main reasons why civilizations fail, since this can lead to famine, lack of resources, and unequal distribution. In this report we will be analyzing various environmental factors in the Mayan civilization in order to answer the following questions: What is the role of climate change in the Mayan collapse? What is the role of elite behaviours in the mayan collapse? What do the possible causes of the mayan collapse imply for our society?
+
+```{r}
+library(tidyverse)
+library(cowplot)
+library(ggbeeswarm)
+library(readxl)
+
+
+mayan_dates_periods <- 
+  read_csv("data/mayan_dates_and_periods_summary.csv") %>% 
+  mutate(start_date = parse_number(start_date))
+
+tikal_hg <- read_excel("data/mayan_tikal_Hg_in_sediment.xlsx")
+
+mayan_hiero <- read_excel("data/mayan_hiero_inscription_dates.xlsx")
+
+oxygen_isotope <- read_csv("data/oxygen_isotope_data_yok_i_ stalagmite.csv")
+```
+
+## Data
+
+```{r}
+
+how_many_inscriptions <- nrow(mayan_hiero)
+how_many_sediment <- nrow(tikal_hg)
+```
+
+Our data is based on the finding from Kennett et al (2012), Hoggarth et al (2016), and Lentz et al. (2020). In order to answer the report's questions we chose to analyze `r how_many_inscriptions` inscriptions and `r how_many_sediment` sediments.
+
+## Exploratory Data
+
+```{r}
+tikal_hg_clean <-
+tikal_hg %>% 
+  separate_wider_delim(
+    cols = `Depth and context`,
+    names = c("Depth", "Context"),
+    delim = ":"
+  ) %>% 
+  rowwise() %>% 
+  mutate(mean_hg = mean(c( `Rep. 1`,`Rep. 2`, `Rep. 3`)))
+
+tikal_hg_clean$period <-
+  factor(tikal_hg_clean$Context,
+         mayan_dates_periods$period)
+
+mayan_hiero_clean <-
+  mayan_hiero %>% 
+  inner_join(mayan_dates_periods,
+             join_by(between(`Gregorian Date AD`,
+                             start_date,
+                             end_date)))
+
+mayan_hiero_clean$period <-
+  factor(mayan_hiero_clean$period,
+         mayan_dates_periods$period)
+```
+
+```{r}
+#| label: fig-comp
+#| fig-cap: "ff"
+
+p1<-
+  ggplot(mayan_hiero_clean)+
+  aes(period)+
+  geom_bar()+
+  scale_x_discrete(drop = FALSE,
+                   guide = guide_axis(n.dodge = 2),
+                   name = "")+
+  theme_minimal()
+
+
+p2 <-
+  ggplot(tikal_hg_clean)+
+  aes(period,
+      mean_hg)+
+  geom_boxplot()+
+  scale_x_discrete(drop = FALSE,
+                   guide = guide_axis(n.dodge = 2),
+                   name = "")+
+  theme_minimal()+
+  geom_hline(yintercept = 1,
+             colour = "red")
+
+plot_grid(p1,
+          p2,
+          labels = "AUTO",
+          ncol = 2)
+```
+
+They key takeaways from the data shown in @fig-comp are:
+
+-   In Table A we can see most of the inscriptions are founf between the Terminal Classic and the Late Classic periods
+
+-   Table A shows the Early Postclassic period has the least inscriptions5
+
+-   Table B shows the lowest mean mercury concentration is in the pre-Mayan Bajo period
+
+-   In Table B we can see the highest mean mercury concentration can be found in the LCP/TCP period
+
+```{r}
+#| label: fig-ox
+#| fig-cap: "oxy"
+
+ggplot(oxygen_isotope)+
+  aes(`yr AD`,
+      `δ18O\r\n(VPDB)`,
+      colour = `δ18O\r\n(VPDB)`)+
+  geom_line()+
+  scale_color_viridis_c()+
+  scale_y_reverse()+
+  annotate("text",
+           x = mayan_dates_periods$midpoint,
+           y= -5,
+           label = mayan_dates_periods$period,
+           angle = 90,
+           size = 3)+
+  geom_vline(data = mayan_dates_periods,
+             aes(xintercept = start_date),
+             colour = "grey70")+
+  scale_x_continuous(limits = c(0,2000),
+                     name = "Years AD")+
+  theme_minimal()
+```
+
+The key aspects in @fig-ox are:
+
+-   The lowest oxygen isotope value recordes was below -3.0 between 1500-2000 years AD
+
+-   The highsest oxygen isotope value is over -5.0 and is found between 1000-1500 years AD
+
+-   Overall the values of the oxygen isotope stay between -4.5 and -3.5
+
+## Conclusion
+
+With the information obtained in this report we can answer the initial questions. What is the role of climate change in the Mayan collapse?. Climate change played an important role in the Mayan collapse. @fig-ox shows that the Mayan region suffered prolonged droughts, since most oxygen isotope values are between -4.5 and -3.5 which indicates dry conditions. Dry conditions can lead to a degradiation of soil which is mentioned in Hoggarth et. al 2016. Consequently there is a lower crop yield, which then leads to a lack of resources and famine.
+
+What is the role of elite behaviors in the mayan collapse? Elites in the Mayan civilization focused on monument building and elaborate rituals. An excess of monument building and elaborate rituals consume a lot of resources. This forces elites to distribute resources unequally, keeping most of them for themselves. This causes the general population to revolt or leave the region.
+
+What do the possible causes of the Mayan collapse imply for our society? The downfall of the Mayan civilization can teach this generation valuable lessons. Like the importance of resource management, distribution, and production. Furthermore, we can see it is not one factor that leads to the downfall of civilization, environmental, political, and social factors all play an important role in determining the success of a civilization. After comparing the results from Kennett et al (2012), Hoggarth et al (2016), Lentz et al. (2020), and this report's results we see they lead to the same conclusion. Environmental factors in the Mayan civilizations played an important role in their downfall, droughts, soil pollution, and a lack of resources led to the downfall of one of the greatest civilization in human history.
+
+## Sources
+
+Julie A. Hoggarth, Sebastian F.M. Breitenbach, Brendan J. Culleton, Claire E. Ebert, Marilyn A. Masson, Douglas J. Kennett,The political collapse of Chichén Itzá in climatic and cultural context,Global and Planetary Change,Volume 138,2016,Pages 25-42,ISSN 0921-8181,https://doi.org/10.1016/j.gloplacha.2015.12.007.
+
+Kennett, D. J., Breitenbach, S. F., Aquino, V. V., Asmerom, Y., Awe, J., Baldini, J. U., Bartlein, P., Culleton, B. J., Ebert, C., Jazwa, C., Macri, M. J., Marwan, N., Polyak, V., Prufer, K. M., Ridley, H. E., Sodemann, H., Winterhalder, B., & Haug, G. H. (2012). Development and disintegration of Maya political systems in response to climate change. Science (New York, N.Y.), 338(6108), 788–791. https://doi.org/10.1126/science.1226299
+
+Lentz, D. L., Hamilton, T. L., Dunning, N. P., Scarborough, V. L., Luxton, T. P., Vonderheide, A., Tepe, E. J., Perfetta, C. J., Brunemann, J., Grazioso, L., Valdez, F., Tankersley, K. B., & Weiss, A. A. (2020). Molecular genetic and geochemical assays reveal severe contamination of drinking water reservoirs at the ancient Maya city of Tikal. Scientific Reports, 10(1). https://doi.org/10.1038/s41598-020-67044-z
