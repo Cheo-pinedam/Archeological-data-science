@@ -1,0 +1,136 @@
+---
+title: "Archeological Analysis: Holocaust"
+author: "Carlos Pineda"
+date: now
+format: html
+editor: visual
+self-contained: true
+execute: 
+  warning: false
+fig-dpi: 600
+---
+
+## Introduction
+
+In recent years, Holocaust archaeology has increased at a rapid pace. There have been some doubts as to to what techniques archaeologists use in order to gain a deeper understanding of how Jewish individuals lived in the Nazi concentration camps. This is due to the invasive techniques used, since more invasive methods are counterproductive. Because the purpose of Holocaust archaeology is to create a remembrance of a genocide. In this report I will be analyzing the amount of artefacts in Nazi concentration camps, and their relative distance from the gas chambers. In order to answer the following research questions: What is the spatial relationship between artefacts and the gas chamber foundations? How do you know this relationship is not due to chance? What do your results imply for the relevance of archaeology to Holocaust studies?
+
+```{r}
+library(tidyverse)
+library(sf)
+
+grid_shp_count_map <-
+  st_read("sobibor_grid_square_artefact_counts.shp")
+
+foundations<-
+  st_read("sobibor-gas-chamber.shp")
+```
+
+## Data
+
+```{r}
+how_many_artefacts <- sum(grid_shp_count_map$artfct_)
+how_many_squares <- nrow(grid_shp_count_map)
+```
+
+Our data set comes directly from the findings in Schute (2018). This data set provides meaningful data regarding the Nazi concentration camps. Like the number of artefacts (`r how_many_artefacts`) and the number of regions the site is divided (`r how_many_squares`). This is useful that can tell us the density of artefacts in the site.
+
+## Exploratory Data
+
+```{r}
+#| label: fig-dstr
+#| fig-cap: "Spatial pattern"
+ggplot()+
+  geom_sf(data = grid_shp_count_map %>% 
+            mutate(artfct_ =na_if(artfct_,0)),
+          aes(fill= artfct_))+
+  geom_sf(data = foundations,
+          fill= NA,
+          colour = "green")+
+  scale_fill_viridis_c(na.value = "white",
+                       name = "Number of artefacts")+
+  theme_void()
+```
+
+The key aspects in @fig-dstr are:
+
+-   The biggest concentration of artefacts can be found West of the gas chambers.
+
+-   The lowest concentration of artefacts can be found directly underneath or South of the gas chambers.
+
+```{r}
+foundations_combine<-
+foundations %>% 
+  st_make_valid() %>% 
+  st_union()
+# calculate distance
+poly_dist <-
+st_distance(x= foundations_combine,
+            y = grid_shp_count_map,
+            by_element = FALSE)
+
+# sum distances
+grid_shp_count_map_dist <-
+grid_shp_count_map %>% 
+  mutate(distance = as.numeric(round(poly_dist / 10000, 2)))
+
+```
+
+```{r}
+#| label: fig-dist
+#| fig-cap: "Relationship between artefact density relative to distance from the foundations of the gas chamber"
+ggplot(grid_shp_count_map_dist)+
+  aes(distance,
+      artfct_)+
+  geom_jitter()+
+  geom_smooth(method = "lm")+
+  labs(x= "Distance",
+       y="Artefact density")
+
+```
+
+The main aspects to highlight from @fig-dist are:
+
+-   The biggest concentration of artefacts can be found at shorter distances.
+
+-   There is a lower artifact density as the distance increases.
+
+```{r}
+#| label: fig-random
+#| fig-cap: "Hypothesis test using randomisation"
+library(infer)
+
+observed_slope <-
+  grid_shp_count_map_dist %>% 
+  specify(artfct_ ~ distance) %>% 
+  calculate("slope")
+
+null_dist_slope<-
+grid_shp_count_map_dist %>% 
+  specify(artfct_ ~ distance) %>% 
+  hypothesize(null = "independence") %>% 
+  generate(rep = 10000,
+           type = "permute") %>% 
+  calculate(stat = "slope")
+
+null_dist_slope %>% 
+  visualise() +
+  shade_p_value(obs_stat = observed_slope,
+                direction = "two_sided")
+
+```
+
+The key components from @fig-random are:
+
+-   The hypothesis test does not match the null hypothesis.
+
+## Conclusion
+
+After analyzing the results in this report, we see a clear relationship between Schute (2018) and this report's outcomes, since both yield the same results. This allows us to answer our initial research questions: What is the spatial relationship between artefacts and the gas chamber foundations? How do you know this relationship is not due to chance? What do your results imply for the relevance of archaeology to Holocaust studies?
+
+In @fig-dstr and @fig-dist we saw the artefacts are mostly concentrated around the foundations of the gas chambers, and that the frequency decreases as the distance increases. This claim is also backed by the findings in Schute (2018), where we see the same distribution of artefacts around the gas chambers. Meaning that the regions around the gas chambers was the main area for disposal. We know this relationship is not due to chance. If it where we would see a more uniform distribution of artefacts.
+
+These results highlight the importance of archaeology in the context of Holocaust studies. Since the spatial analysis executed in this report can help us understand the dynamics within the Nazi concentration camps. Furthermore, as mentioned in Schute (2018), archaeologists have the responsibility of preserving these sites to have a remembrance of a genocide.
+
+## Sources
+
+Schute, I. (2017). Collecting Artifacts on Holocaust Sites: A Critical review of Archaeological Research in Ybenheer, Westerbork, and Sobibor. International Journal of Historical Archaeology, 22(3), 593–613. https://doi.org/10.1007/s10761-017-0437-y
