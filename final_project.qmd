@@ -1,0 +1,186 @@
+---
+title: "Comparative Analysis of Geometric Symbols in Mobile Artifacts from La Ferrassie (France) and Spy (Belgium): Insights into Community Dynamics and Cultural Practices"
+author: "Carlos Pineda & Ethan Thomas"
+date: now
+format: html
+editor: visual
+self-contained: true
+execute: 
+  warning: false
+fig-dpi: 600
+---
+## Introduction
+Researchers have discovered numerous geometric signs on mobile artefacts during the Paleolithic era. These can be found in various locations across Europe including France, Belgium, Germany, and Spain. These signs, while simple, are crucial for archaeologists when trying to understand cultural and social dynamics during the Paleolithic era. According to the findings in  Dutkiewicz et. al (2020), the frequency and type of these symbols provide us with important insights into the community dynamics and culture of these ancient communities. 
+
+In this report, we will execute a comparative analysis of geometric symbols found on mobile artefacts from la Ferrassie (France) and Spy(Belgium). By analyzing the frequency and type of geometric signs we hope to gain a deeper understanding of the communities that inhabited these sites. We will specifically address the following research question: What are the comparative symbol use and symbol purpose between La Ferrassie(France) and Spy(Belgium) and what does this tell us about each country's community dynamics and culture?
+
+```{r}
+#importing basic libraries
+library(tidyverse)
+library(cowplot)
+
+```
+
+```{r}
+#importing data
+
+my_data <-
+  read.csv("signBase_Version1.0.csv")
+```
+
+## Data
+```{r}
+#cleaning Data
+my_data_clean <-
+  my_data %>% 
+  select(object_id,
+         archaeological_unit,
+         country,
+         site_name,
+         date_bp_max_min,
+         object_type,
+         line,
+         obline,
+         notch,
+         cross,
+         vulva) %>% 
+  mutate(date_bp_max_min = parse_number(date_bp_max_min)) %>% 
+  filter(site_name %in% c("Spy", "La Ferrassie"))
+```
+
+```{r}
+my_data_clean_spy <-
+  my_data_clean %>% 
+  select(site_name,
+          object_type,
+         line,
+         obline,
+         notch,
+         cross,
+         vulva) %>% 
+  filter(site_name %in% "Spy")
+```
+
+```{r}
+my_data_clean_ferr <-
+  my_data_clean %>% 
+  select(site_name,
+          object_type,
+         line,
+         obline,
+         notch,
+         cross,
+         vulva) %>%
+  filter(site_name %in% "La Ferrassie")
+```
+
+```{r}
+#in line r code
+n_sites_bel <- nrow(my_data_clean_spy)
+n_sites_fre <- nrow(my_data_clean_ferr)
+n_lines <- sum(my_data_clean$line)
+n_vulva <- sum(my_data_clean$vulva)
+```
+
+Our analysis is directly based from the data set provided in Dutkiewicz et. al (2020), which provides us with a record of geometric symbols on mobile artefacts across Europe. We are only focusing on two sites, Spy in Belgium which contains `r n_sites_bel` mobile artefacts and La Ferrassie in France with `r n_sites_fre` mobile artefacts. After extracting some values from the data set, we decided to conduct our analysis focusing on five geometric symbols: line, obline, notch, cross, and vulva. Since these symbols provide a nice range of frequency. For example, there are `r n_lines`  line symbols in total between Spy and La Ferrassie, but only `r n_vulva` vulva signs between these two sites. 
+
+Additionally, we are also extracting the key findings in Stoliar (1977), since this article provides us with important information about the meaning of the geometric signs and their implications. For example, Stoliar (1977) mentions how the presence of female symbols during the Paleolithic proves that the community in La Ferrassie had a sense of self-awareness and consciousness. Furthermore, we are also basing our final analysis on the findings of Simon (2018), since the article mentions how the symbols in cave art symbolize communication among humans during the Paleolithic. 
+
+```{r}
+my_data_clean_spy_counts <- 
+
+my_data_clean_spy %>% 
+
+  select(line:vulva) %>% 
+
+  pivot_longer(everything()) %>% 
+
+  group_by(name)  %>% 
+
+  summarise(n = sum(value))
+```
+
+```{r}
+my_data_clean_lf_counts <- 
+
+my_data_clean_ferr %>% 
+
+  select(line:vulva) %>% 
+
+  pivot_longer(everything()) %>% 
+
+  group_by(name)  %>% 
+
+  summarise(n = sum(value))
+```
+
+
+## Exploratory Data Spy
+
+```{r}
+#| label: fig-spy
+#| fig-cap: "Ethan Thomas: Frequency of symbols (Spy)"
+
+ggplot(my_data_clean_spy_counts)+
+
+  aes(name, n) +
+  labs(x="Symbols",
+       y="Frequency")+
+  geom_col( fill = "orange")+
+  theme_minimal()
+```
+
+The main aspects to highlight from @fig-spy are:
+
+- The most frequent geometric symbol found in mobile artifacts in Spy is the line symbol while the least frequent is the cross symbol. 
+
+- Additionally, we can also see a high count of notch symbols, and a moderate frequency of obline symbols. 
+
+- It is worth mentioning, that the vulva symbol has no appearance in any location in the site Spy. 
+
+
+
+## Exploratory Data La Ferrassie
+```{r}
+#| label: fig-lf
+#| fig-cap: "Carlos Pineda: Frequency of symbols (La Ferrassie)"
+
+
+ggplot(my_data_clean_lf_counts)+
+
+  aes(name, n) +
+  labs(x="Symbols",
+       y="Frequency")+
+  geom_col( fill = "blue")+
+  theme_minimal()
+```
+
+
+The key aspects in @fig-lf are:
+
+- There is a high frequency of line and notch symbols on mobile artefacts in La Ferrassie. 
+
+- The least frequent symbol on mobile artefacts in La Ferrassie is the cross symbol.
+
+- In contrast to the Spy site, there is no appearance of obline symbols on mobile artefacts. However, there is presence of vulva symbols in La Ferrassie. 
+
+## Conclusion
+
+After comparing the findings in Dutkiewicz et al. (2020), Stoliar (1977), Simon (2018), and this report, we see all of these yield the same results. Which allows us to answer the initial research question: What are the comparative symbol use and symbol purpose between La Ferrassie (France) and Spy (Belgium), and what does this tell us about each community's societal structure, cultural expression, and interaction with their environment?
+
+In @fig-spy and @fig-lf we saw some similarities between the site's use of symbols. For example, we saw how both sites had a high use of line symbols and  a medium frequency of cross symbols. The latter one could symbolize a rise of religion among their respective communities. Additionally, according to Simon (2018) the appearance of these symbols could symbolize an earlier start of human communication than what was thought. 
+
+Furthermore, we also saw some disparities between the two sites, specifically the use of vulva signs. In @fig-lf we saw a medium frequency of vulva symbols. While in @fig-spy, the data shows there is no use of vulva symbols. These symbols appear to indicate a focus on fertility and a sense of self-awareness. This claim is also supported by the findings in Stoliar (1977), where they found multiple depictions of female signs in La Ferrassie, which is evidence of consciousnesses in La Ferrassie's community. This finding supports the claim that Paleolithic humans used cave symbols to communicate cultural norms in order to ensure the survival of future generations. The disparities among the two sites show how each site adapted their use of symbols to build their own cultural norms. 
+
+
+
+## References
+
+Dein Simon. Cave Art and the Origins of Language. 2018; 5(3): 555668. DOI: 10.19080/GJAA.2018.04.555668
+
+ Dutkiewicz, E., Russo, G., Lee, S. Bentz C., SignBase, a collection of geometric signs on mobile objects in the Paleolithic. Sci Data 7, 364 (2020). https://doi.org/10.1038/s41597-020-00704-xLinks to an external site.  
+
+Stoliar, A. D. (1977). On the Sociohistorical Decoding of upper Paleolithic Female Signs. Soviet Anthropology and Archeology, 16(2), 36–77. https://doi.org/10.2753/AAE1061-1959160236
+
+
+
